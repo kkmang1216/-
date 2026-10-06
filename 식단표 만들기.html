@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>냉장고 파먹기 주간 식단 플래너</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              200: '#fde68a',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309',
+            },
+            kitchen: {
+              sage: '#84a98c',
+              terracotta: '#e07a5f',
+              charcoal: '#2f3e46',
+              cream: '#fcfbf7'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      background-color: #f7f6f0;
+      color: #2d3748;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased">
+
+  <header class="sticky top-0 z-30 bg-white/95 border-b border-stone-200 backdrop-blur shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <span class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-amber-200">
+          🍳
+        </span>
+        <div>
+          <h1 class="font-bold text-lg text-stone-900 leading-tight">냉장고 파먹기 만능 식단 플래너</h1>
+          <p class="text-xs text-stone-500">어떤 재료든 OK! 볶음·찌개·덮밥·파스타 7일 식단</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button id="btnQuickFill" class="text-xs px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium transition">
+          💡 추천 식재료 채우기
+        </button>
+        <button id="btnOpenApiModal" class="text-xs px-3 py-1.5 rounded-lg border border-stone-300 hover:bg-stone-50 text-stone-600 transition flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          AI 설정
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 w-full flex-1">
+    
+    <!-- Top banner tip -->
+    <div class="mb-6 p-4 bg-amber-50 border border-amber-200/80 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl">🪄</span>
+        <p class="text-sm text-amber-900 leading-snug">
+          냉장고 속 재료를 등록하고 <strong>선택</strong>해보세요! 솥밥뿐만 아니라 <strong>볶음, 찌개, 파스타, 덮밥, 조림</strong> 등 선택한 재료로 만들 수 있는 다채로운 일주일 식단을 완성해 드립니다.
+        </p>
+      </div>
+      <div class="text-xs text-amber-800 font-medium bg-amber-100/70 px-3 py-1.5 rounded-xl self-start sm:self-auto">
+        선택 재료 기반 맞춤 요리 🍳
+      </div>
+    </div>
+
+    <!-- Main Grid: Left (Ingredients control) & Right (Plan & Results) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <section class="lg:col-span-4 bg-white p-5 rounded-2xl shadow-sm border border-stone-200">
+        <div class="flex items-center justify-between mb-4 pb-2 border-b border-stone-100">
+          <div>
+            <h2 class="font-bold text-stone-900 flex items-center gap-1.5 text-base">
+              <span>🧊</span> 우리 집 냉장고 식재료
+            </h2>
+            <p class="text-xs text-stone-500 mt-0.5">클릭하면 이번 주 식단 반영 재료로 지정됩니다</p>
+          </div>
+          <span id="selectedCountBadge" class="text-xs px-2.5 py-1 rounded-full font-bold bg-amber-100 text-amber-800">
+            0개 선택
+          </span>
+        </div>
+
+        <!-- Add Ingredient Input -->
+        <div class="flex gap-2 mb-3">
+          <input 
+            type="text" 
+            id="ingredientInput" 
+            placeholder="식재료 입력 (예: 삼겹살, 느타리)" 
+            class="flex-1 px-3.5 py-2 text-sm border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
+          >
+          <button 
+            id="btnAddIngredient" 
+            class="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white text-sm font-semibold rounded-xl transition shadow-sm"
+          >
+            추가
+          </button>
+        </div>
+
+        <!-- Quick Tag Presets -->
+        <div class="mb-4">
+          <p class="text-[11px] font-semibold uppercase text-stone-400 mb-1.5 tracking-wider">자주 쓰는 식재료 빠른 추가</p>
+          <div class="flex flex-wrap gap-1.5" id="presetPillsContainer">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Ingredients List with Checkboxes -->
+        <div class="mt-4">
+          <div class="flex items-center justify-between text-xs text-stone-500 mb-2 font-medium">
+            <span>보유 재료 목록 (<span id="totalIngredientsCount">0</span>)</span>
+            <div class="space-x-1.5">
+              <button id="btnSelectAll" class="text-amber-700 hover:underline">전체선택</button>
+              <span>·</span>
+              <button id="btnClearAll" class="text-stone-400 hover:text-stone-600">비우기</button>
+            </div>
+          </div>
+
+          <div id="ingredientsList" class="space-y-1.5 max-h-72 overflow-y-auto pr-1 hide-scrollbar">
+            <!-- Dynamic elements will be inserted here -->
+          </div>
+          
+          <div id="emptyFridgeHint" class="text-center py-8 text-stone-400 text-xs hidden">
+            <p class="text-2xl mb-1">🥦</p>
+            냉장고가 비어있습니다.<br>위 입력창에서 식재료를 추가해보세요!
+          </div>
+        </div>
+
+        <!-- Plan Generation Options -->
+        <div class="mt-6 pt-4 border-t border-stone-100 space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-stone-700 mb-1">식단 테마 및 선호 스타일</label>
+            <select id="mealTypeSelect" class="w-full text-xs px-3 py-2 border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <option value="allRounder">다채로운 만능형 (볶음·찌개·덮밥·면 골고루)</option>
+              <option value="onePlate">초간단 원팬/원플레이트형 (설거지 적은 15분 요리)</option>
+              <option value="koreanHome">든든한 한식 백반형 (메인 요리 + 국/찌개 조합)</option>
+              <option value="potRiceFocus">솥밥 & 별미 요리형 (솥밥 및 원팟 요리 위주)</option>
+            </select>
+          </div>
+
+          <button 
+            id="btnGeneratePlan" 
+            class="w-full py-3.5 bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-bold text-sm rounded-xl shadow-md shadow-amber-200 transition flex items-center justify-center gap-2"
+          >
+            <span>✨</span>
+            <span id="generateBtnText">선택한 재료로 일주일 식단표 만들기</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="lg:col-span-8 space-y-4">
+        
+        <!-- Action bar above plan -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-stone-200 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-bold text-stone-800">📅 7일 맞춤 식단표</span>
+            <span id="planStatusTag" class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-medium">
+              만능 요리 매칭
+            </span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button id="btnCopyPlan" class="px-3 py-1.5 text-xs font-medium border border-stone-300 bg-white hover:bg-stone-50 rounded-lg transition flex items-center gap-1 text-stone-700">
+              📋 텍스트 복사
+            </button>
+            <button id="btnShoppingList" class="px-3 py-1.5 text-xs font-medium bg-stone-900 text-white hover:bg-stone-800 rounded-lg transition flex items-center gap-1 shadow-sm">
+              🛒 부족한 장보기 목록
+            </button>
+          </div>
+        </div>
+
+        <!-- 7-Days Cards Container -->
+        <div id="weeklyPlanContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          <!-- Populated by JavaScript -->
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="mt-12 bg-white border-t border-stone-200 py-6 text-center text-xs text-stone-500">
+    <p class="font-medium text-stone-600">냉장고 파먹기 만능 식단 플래너</p>
+    <p class="mt-1 text-stone-400">자투리 식재료를 버리지 않고 어떤 재료든 맛있는 요리로 완성하세요.</p>
+  </footer>
+
+  <div id="recipeModal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-3xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl border border-stone-100">
+      
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-stone-100 flex items-start justify-between bg-stone-50/50">
+        <div>
+          <span id="modalCategoryTag" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 mb-1.5">
+            일품 요리
+          </span>
+          <h3 id="modalRecipeTitle" class="text-xl font-bold text-stone-900 leading-tight"></h3>
+        </div>
+        <button id="btnCloseRecipeModal" class="w-8 h-8 rounded-full bg-stone-200/70 hover:bg-stone-300 text-stone-600 flex items-center justify-center font-bold text-sm transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-5 text-sm">
+        <div>
+          <h4 class="font-bold text-stone-800 flex items-center gap-1.5 mb-2">
+            <span>🥗</span> 필요 재료 및 양념
+          </h4>
+          <div id="modalIngredientsList" class="bg-stone-50 p-3.5 rounded-xl text-stone-700 leading-relaxed text-xs border border-stone-100"></div>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-stone-800 flex items-center gap-1.5 mb-2">
+            <span>🔥</span> 조리 단계 & 비법 팁
+          </h4>
+          <ol id="modalStepsList" class="space-y-2 text-stone-600 text-xs list-decimal pl-4 leading-relaxed"></ol>
+        </div>
+
+        <div id="modalPotRiceTipBox" class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-xs hidden">
+          <p class="font-bold mb-0.5 flex items-center gap-1">
+            <span>💡</span> 셰프의 조리 한 끗 팁
+          </p>
+          <p id="modalPotRiceTipText"></p>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-stone-100 bg-stone-50 flex justify-end">
+        <button id="btnCloseRecipeModalBottom" class="px-5 py-2 bg-stone-900 text-white rounded-xl text-xs font-semibold hover:bg-stone-800 transition">
+          닫기
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="shoppingModal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-100 space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-stone-100">
+        <h3 class="font-bold text-stone-900 text-base flex items-center gap-2">
+          <span>🛒</span> 이번 주 필요한 추가 장보기 목록
+        </h3>
+        <button id="btnCloseShoppingModal" class="text-stone-400 hover:text-stone-600 font-bold text-sm">✕</button>
+      </div>
+      <p class="text-xs text-stone-500">현재 냉장고에 없어서 구매가 권장되는 핵심 부재료들입니다.</p>
+      
+      <div id="shoppingItemsContainer" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+        <!-- Injected by JS -->
+      </div>
+
+      <div class="pt-2 flex gap-2">
+        <button id="btnCopyShoppingList" class="flex-1 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded-xl transition">
+          장보기 목록 복사
+        </button>
+        <button id="btnCloseShoppingModalBtn" class="flex-1 py-2.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold rounded-xl transition">
+          확인 완료
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="apiModal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-100 space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-stone-100">
+        <h3 class="font-bold text-stone-900 text-base flex items-center gap-2">
+          <span>⚙️</span> AI 식단 생성 엔진 설정
+        </h3>
+        <button id="btnCloseApiModal" class="text-stone-400 hover:text-stone-600 font-bold text-sm">✕</button>
+      </div>
+      
+      <p class="text-xs text-stone-600 leading-relaxed">
+        기본적으로 정밀한 <strong>자체 한식/솥밥 맞춤 알고리즘</strong>으로 즉시 식단이 생성됩니다.
+        직접 맞춤 프롬프트형 AI를 연결하려면 Gemini API 키를 등록할 수 있습니다. (비워둘 시 내장 스마트 엔진 작동)
+      </p>
+
+      <div>
+        <label class="block text-xs font-semibold text-stone-700 mb-1">Gemini API Key (선택)</label>
+        <input 
+          type="password" 
+          id="customApiKeyInput" 
+          placeholder="AIzaSy... (선택 사항)" 
+          class="w-full px-3.5 py-2 text-xs border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+        >
+      </div>
+
+      <div class="pt-2 flex justify-end gap-2">
+        <button id="btnSaveApiConfig" class="px-4 py-2 bg-amber-500 text-white text-xs font-semibold rounded-xl hover:bg-amber-600 transition">
+          설정 저장
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-stone-900 text-white px-4 py-3 rounded-2xl text-xs font-medium shadow-xl flex items-center gap-2 pointer-events-none">
+    <span id="toastIcon">✨</span>
+    <span id="toastMessage">알림 메시지</span>
+  </div>
+
+  <script>
+    const RECIPE_DATABASE = [
+      // 1. 볶음 & 구이 요리
+      {
+        id: "pork-kongbul",
+        name: "매콤 삼겹 콩나물 불고기 (콩불)",
+        category: "볶음 & 구이",
+        dishType: "stirfry",
+        primaryIngredients: ["삼겹살", "콩나물", "양파"],
+        supportingIngredients: ["대파", "고추장", "고춧가루", "진간장", "설탕", "다진 마늘"],
+        summary: "아삭한 콩나물과 삼겹살을 매콤달콤한 황금 양념장에 센 불로 볶아낸 최고의 밥도둑",
+        ingredientsText: "삼겹살 200g, 콩나물 200g, 양파 1/2개, 대파 1대, 고추장 1.5T, 고춧가루 1.5T, 진간장 1.5T, 설탕 1T, 다진마늘 1T",
+        steps: [
+          "팬 바닥에 씻은 콩나물과 채 썬 양파를 넉넉하게 깝니다.",
+          "그 위에 삼겹살을 한 입 크기로 올리고 준비한 양념장을 얹습니다.",
+          "뚜껑을 닫고 중불로 가열해 채수가 촉촉하게 나오면 센 불에서 고루 볶습니다.",
+          "고기가 다 익으면 쫑쫑 썬 대파를 넣고 국물이 자작해질 때까지 졸입니다."
+        ],
+        cookingTip: "고기와 콩나물을 다 건져 먹은 뒤 남은 양념에 밥과 김가루, 참기름을 넣어 볶음밥으로 즐기세요."
+      },
+      {
+        id: "pork-mushroom-stirfry",
+        name: "간 돼지고기 느타리 굴소스 볶음",
+        category: "볶음 & 구이",
+        dishType: "stirfry",
+        primaryIngredients: ["간 돼지고기", "느타리버섯", "대파"],
+        supportingIngredients: ["굴소스", "진간장", "다진 마늘", "참기름", "후추"],
+        summary: "고소한 다진 돼지고기와 쫄깃한 느타리버섯에 굴소스 불맛을 입힌 초간단 밥반찬",
+        ingredientsText: "간 돼지고기 150g, 느타리버섯 150g, 대파 1대, 굴소스 1T, 진간장 0.5T, 다진마늘 0.5T, 참기름 1T",
+        steps: [
+          "느타리버섯은 결대로 먹기 좋게 찢고, 대파는 송송 썹니다.",
+          "팬에 기름을 두르고 다진 마늘과 파를 볶아 향을 낸 뒤 간 돼지고기를 넣어 볶습니다.",
+          "고기 핏기가 가시면 느타리버섯을 넣고 센 불에서 수분을 날려가며 볶습니다.",
+          "굴소스 1큰술과 진간장 0.5큰술을 둘러 간을 맞춘 뒤 참기름과 후추로 마무리합니다."
+        ],
+        cookingTip: "밥 위에 그대로 얹으면 훌륭한 굴소스 버섯 고기 덮밥으로 즐길 수 있습니다."
+      },
+      {
+        id: "spicy-tofu-jorim",
+        name: "매콤 자작 두부조림",
+        category: "조림 & 찜",
+        dishType: "braise",
+        primaryIngredients: ["두부", "양파", "대파"],
+        supportingIngredients: ["고춧가루", "진간장", "설탕", "다진 마늘", "들기름"],
+        summary: "들기름에 부친 고소한 두부에 칼칼한 간장 양념이 배어들어 밥 한 공기 뚝딱 비우는 조림",
+        ingredientsText: "두부 1모, 양파 1/2개, 대파 1/2대, 고춧가루 1.5T, 진간장 3T, 설탕 0.5T, 다진마늘 0.5T, 물 150ml, 들기름 1T",
+        steps: [
+          "두부는 1cm 두께로 썰어 키친타월로 물기를 가볍게 제거합니다.",
+          "팬에 들기름을 두르고 두부를 앞뒤로 노릇노릇하게 부쳐냅니다.",
+          "두부 위에 채 썬 양파와 대파를 얹고, 간장·고춧가루·마늘·물을 섞은 양념장을 붓습니다.",
+          "중약불에서 국물이 자작해질 때까지 5~7분간 국물을 끼얹어가며 졸입니다."
+        ],
+        cookingTip: "간 돼지고기가 있다면 양념장에 함께 볶아 넣으면 풍미가 2배로 진해집니다."
+      },
+
+      // 2. 찌개 & 국 요리
+      {
+        id: "pork-kimchi-stew",
+        name: "삼겹 돼지고기 듬뿍 묵은지 김치찌개",
+        category: "찌개 & 국",
+        dishType: "stew",
+        primaryIngredients: ["삼겹살", "묵은지", "두부"],
+        supportingIngredients: ["대파", "양파", "고춧가루", "국간장", "다진 마늘"],
+        summary: "고소한 삼겹살 기름에 달달 볶은 신김치와 부드러운 두부가 어우러진 깊은 맛의 김치찌개",
+        ingredientsText: "삼겹살 150g, 묵은지 200g, 두부 1/2모, 대파 1대, 양파 1/4개, 고춧가루 1T, 국간장 1T, 다진마늘 1T, 물 500ml",
+        steps: [
+          "냄비에 삼겹살을 먼저 볶아 기름을 충분히 냅니다.",
+          "나온 고기 기름에 송송 썬 묵은지와 설탕 반 티스푼을 넣고 투명해질 때까지 볶습니다.",
+          "물(또는 쌀뜨물) 500ml를 붓고 센 불로 끓이다가 끓어오르면 중약불로 15분 이상 푹 끓입니다.",
+          "두부와 대파, 다진 마늘, 국간장을 넣고 3분간 더 끓여 완성합니다."
+        ],
+        cookingTip: "쌀뜨물을 사용하면 국물 맛이 한층 더 구수하고 감칠맛이 살아납니다."
+      },
+      {
+        id: "kimchi-kongnamul-soup",
+        name: "얼큰 시원 김치 콩나물국 & 계란말이",
+        category: "찌개 & 국",
+        dishType: "soup",
+        primaryIngredients: ["묵은지", "콩나물", "달걀"],
+        supportingIngredients: ["대파", "국간장", "고춧가루", "다진 마늘"],
+        summary: "속이 시원하게 풀리는 칼칼한 김치 콩나물국과 노릇하고 포근한 계란말이의 찰떡궁합",
+        ingredientsText: "묵은지 1컵, 콩나물 150g, 대파 1대, 달걀 3개, 국간장 1.5T, 다진마늘 0.5T",
+        steps: [
+          "냄비에 참기름 살짝 두르고 신김치를 볶다가 물 600ml를 붓고 끓입니다.",
+          "물이 끓으면 씻은 콩나물과 다진 마늘을 넣고 뚜껑을 연 채 5분간 시원하게 끓입니다.",
+          "국간장과 소금으로 간을 맞추고 송송 썬 대파를 넣어 국을 완성합니다.",
+          "볼에 달걀 3개를 풀어 소금 간을 한 뒤 팬에 돌돌 말아 계란말이를 곁들입니다."
+        ],
+        cookingTip: "콩나물국은 뚜껑을 열고 끓여야 콩 비린내 없이 맑고 개운합니다."
+      },
+      {
+        id: "pork-doenjang-jjigae",
+        name: "대패삼겹 우렁풍 된장찌개",
+        category: "찌개 & 국",
+        dishType: "stew",
+        primaryIngredients: ["삼겹살", "두부", "양파"],
+        supportingIngredients: ["된장", "느타리버섯", "대파", "고춧가루", "다진 마늘"],
+        summary: "삼겹살의 고소한 육즙과 구수한 된장, 부드러운 두부와 버섯이 푸짐한 된장찌개",
+        ingredientsText: "삼겹살 100g, 두부 1/2모, 양파 1/2개, 느타리버섯 50g, 된장 2T, 고춧가루 0.5T, 다진마늘 0.5T, 물 450ml",
+        steps: [
+          "냄비에 삼겹살을 노릇하게 볶아 기름을 냅니다.",
+          "고기가 익으면 된장 2큰술을 넣고 고기 기름에 살짝 볶아 구수한 풍미를 올립니다.",
+          "물 450ml를 붓고 깍둑썬 양파와 느타리버섯을 넣어 끓입니다.",
+          "끓어오르면 두부와 다진 마늘, 고춧가루를 넣고 중불에서 5분간 더 끓여냅니다."
+        ],
+        cookingTip: "된장을 고기 기름에 1분간 살짝 볶아준 뒤 물을 부으면 떫은맛이 사라집니다."
+      },
+
+      // 3. 한그릇 덮밥 & 면 요리
+      {
+        id: "egg-onion-donburi",
+        name: "달콤 짭조름 양파 계란덮밥",
+        category: "덮밥 & 면",
+        dishType: "oneplate",
+        primaryIngredients: ["달걀", "양파", "쌀"],
+        supportingIngredients: ["진간장", "맛술", "설탕", "대파", "참기름"],
+        summary: "재료가 마땅치 않을 때 10분 만에 만드는 일식 오야코동 스타일의 촉촉한 계란덮밥",
+        ingredientsText: "달걀 2~3개, 양파 1개, 대파 약간, 진간장 2T, 맛술 2T, 설탕 0.5T, 물 4T",
+        steps: [
+          "양파는 0.5cm 두께로 채 썰고 대파는 어슷 썹니다.",
+          "작은 팬에 진간장 2T, 맛술 2T, 설탕 0.5T, 물 4T를 넣고 끓입니다.",
+          "소스가 끓으면 양파를 넣고 투명해질 때까지 2분간 익힙니다.",
+          "달걀을 가볍게 풀어 양파 위에 빙 둘러 부은 뒤 뚜껑 닫고 반숙으로 1분간 익힙니다.",
+          "따뜻한 밥 위에 스르륵 얹고 대파를 올려 냅니다."
+        ],
+        cookingTip: "달걀물을 너무 완벽하게 풀지 않고 흰자와 노른자가 살짝 섞이게 해야 더 부드럽습니다."
+      },
+      {
+        id: "pork-bibim-noodle",
+        name: "바싹 삼겹 콩나물 비빔면/국수",
+        category: "덮밥 & 면",
+        dishType: "noodle",
+        primaryIngredients: ["삼겹살", "콩나물", "달걀"],
+        supportingIngredients: ["소면(라면사리)", "고추장", "진간장", "식초", "설탕", "참기름"],
+        summary: "아삭하게 데친 콩나물과 매콤새콤 비빔면에 바싹 구운 삼겹살을 얹어 먹는 별미",
+        ingredientsText: "삼겹살 120g, 콩나물 100g, 소면 1인분, 달걀 1개, 고추장 1.5T, 간장 1T, 식초 1T, 설탕 1T, 참기름 1T",
+        steps: [
+          "콩나물은 끓는 물에 2분간 데쳐 찬물에 헹궈 물기를 꼭 짭니다.",
+          "삼겹살은 팬에 겉면이 바삭해질 때까지 구워 기름을 뺍니다.",
+          "소면을 삶아 찬물에 헹군 뒤 고추장, 간장, 식초, 설탕, 참기름 양념에 콩나물과 함께 비빕니다.",
+          "그릇에 비빔면을 담고 구운 삼겹살과 삶은 달걀(또는 후라이)을 올려 완성합니다."
+        ],
+        cookingTip: "양념장에 식초 1큰술과 설탕의 밸런스가 입맛을 돋우는 핵심입니다."
+      },
+      {
+        id: "mapo-tofu-rice",
+        name: "매콤 감칠맛 만능 마파두부 덮밥",
+        category: "덮밥 & 면",
+        dishType: "oneplate",
+        primaryIngredients: ["두부", "간 돼지고기", "대파"],
+        supportingIngredients: ["고추장(두반장)", "진간장", "굴소스", "다진 마늘", "전분물"],
+        summary: "다진 고기와 보들보들한 두부에 매콤한 소스를 부어 밥에 쓱쓱 비벼 먹는 중화풍 덮밥",
+        ingredientsText: "두부 1모, 간 돼지고기 100g, 대파 1대, 다진마늘 1T, 고추장 1T, 진간장 1T, 굴소스 1T, 물 1컵, 전분물 2T",
+        steps: [
+          "두부는 1.5cm 주사위 모양으로 깍둑썰기합니다.",
+          "팬에 기름을 두르고 다진 파와 마늘, 간 돼지고기를 넣어 노릇하게 볶습니다.",
+          "고추장 1T, 간장 1T, 굴소스 1T를 넣고 볶다가 물 1컵을 붓고 끓입니다.",
+          "끓어오르면 썰어둔 두부를 넣고 2분간 조린 뒤 전분물을 조금씩 둘러 농도를 맞춥니다.",
+          "참기름 살짝 두르고 따뜻한 밥 위에 넉넉히 얹어냅니다."
+        ],
+        cookingTip: "두부를 끓는 물에 소금 반 스푼 넣고 1분간 데친 뒤 넣으면 부서지지 않고 탱글탱글합니다."
+      },
+
+      // 4. 무쇠냄비 & 솥밥 요리
+      {
+        id: "pork-mushroom-rice",
+        name: "간 돼지고기 느타리 솥밥",
+        category: "무쇠솥밥 & 밥",
+        dishType: "potrice",
+        primaryIngredients: ["간 돼지고기", "느타리버섯", "쌀"],
+        supportingIngredients: ["쪽파", "진간장", "맛술", "다진 마늘", "참기름"],
+        summary: "고기 육즙과 느타리버섯의 쫄깃함이 밥알에 쏙 배어든 든든한 솥밥",
+        ingredientsText: "쌀 2컵, 느타리버섯 150g, 간 돼지고기 120g, 진간장 1.5T, 맛술 1T, 다진마늘 0.5T, 참기름 1T, 물 0.9비율",
+        steps: [
+          "쌀을 30분간 불려 체에 밭쳐 물기를 뺍니다.",
+          "간 돼지고기는 간장, 맛술, 다진마늘에 밑간 후 팬에 참기름 두르고 버섯과 1분간 볶습니다.",
+          "무쇠냄비에 불린 쌀과 물(0.9비율)을 붓고 볶은 고기와 버섯을 얹습니다.",
+          "중불로 끓어오르면 가장 약불로 12분 취사 후 불 끄고 10분간 뜸을 들입니다."
+        ],
+        cookingTip: "버섯과 고기에서 수분이 나오므로 평소 밥물보다 10~15% 적게 잡으세요."
+      },
+      {
+        id: "pork-beansprout-rice",
+        name: "바싹 삼겹 콩나물 솥밥 & 양념간장",
+        category: "무쇠솥밥 & 밥",
+        dishType: "potrice",
+        primaryIngredients: ["삼겹살", "콩나물", "쌀"],
+        supportingIngredients: ["대파", "진간장", "고춧가루", "참기름", "통깨"],
+        summary: "아삭한 콩나물과 기름기 쏙 뺀 고소한 삼겹살을 양념간장에 쓱쓱 비벼 먹는 솥밥",
+        ingredientsText: "쌀 2컵, 삼겹살 150g, 콩나물 200g, 물(0.75비율), 대파 약간, 참기름 1T",
+        steps: [
+          "삼겹살을 한 입 크기로 썰어 팬에 바싹 굽고 기름기를 키친타월로 뺍니다.",
+          "불린 쌀을 냄비에 담고 물은 평소보다 25% 적게 붓습니다.",
+          "쌀 위에 씻은 콩나물을 수북하게 얹고 그 위에 구운 삼겹살을 올립니다.",
+          "뚜껑 덮고 끓어오르면 최약불 12분, 불 끄고 뜸 10분을 들입니다."
+        ],
+        cookingTip: "콩나물 비린내를 방지하기 위해 가열 중에는 절대 뚜껑을 열지 마세요."
+      },
+      {
+        id: "mushroom-plain-rice",
+        name: "들기름 느타리 버섯 솥밥",
+        category: "무쇠솥밥 & 밥",
+        dishType: "potrice",
+        primaryIngredients: ["느타리버섯", "쌀", "대파"],
+        supportingIngredients: ["들기름", "진간장", "통깨", "쪽파"],
+        summary: "들기름에 달달 볶아 수분을 날린 느타리의 진한 향을 품은 건강 채소 솥밥",
+        ingredientsText: "쌀 2컵, 느타리버섯 1팩, 들기름 1.5T, 진간장 1T, 밥물 0.9비율",
+        steps: [
+          "찢어둔 느타리를 들기름에 센 불로 볶다가 간장 1T를 둘러 불맛을 입힙니다.",
+          "불린 쌀에 물 0.9비율을 붓고 볶은 버섯을 얹습니다.",
+          "약불 12분 취사 후 10분간 뜸을 들입니다."
+        ],
+        cookingTip: "뜸 들일 때 버터 10g을 살짝 올려 녹이면 풍미가 극대화됩니다."
+      }
+    ];
+
+    const defaultPresets = ["삼겹살", "간 돼지고기", "느타리버섯", "콩나물", "두부", "묵은지", "달걀", "양파", "마늘", "대파", "쌀"];
+    
+    let state = {
+      fridge: [
+        { name: "삼겹살", selected: true },
+        { name: "간 돼지고기", selected: true },
+        { name: "느타리버섯", selected: true },
+        { name: "콩나물", selected: true },
+        { name: "달걀", selected: true },
+        { name: "두부", selected: false },
+        { name: "묵은지", selected: false },
+        { name: "양파", selected: false },
+        { name: "대파", selected: false },
+        { name: "쌀", selected: true }
+      ],
+      currentWeeklyPlan: [],
+      apiKey: "",
+      mealType: "allRounder"
+    };
+
+    const ingredientsListEl = document.getElementById("ingredientsList");
+    const ingredientInputEl = document.getElementById("ingredientInput");
+    const btnAddIngredient = document.getElementById("btnAddIngredient");
+    const presetPillsContainer = document.getElementById("presetPillsContainer");
+    const totalIngredientsCountEl = document.getElementById("totalIngredientsCount");
+    const selectedCountBadgeEl = document.getElementById("selectedCountBadge");
+    const emptyFridgeHintEl = document.getElementById("emptyFridgeHint");
+    const btnSelectAll = document.getElementById("btnSelectAll");
+    const btnClearAll = document.getElementById("btnClearAll");
+    const btnGeneratePlan = document.getElementById("btnGeneratePlan");
+    const weeklyPlanContainer = document.getElementById("weeklyPlanContainer");
+    const recipeModal = document.getElementById("recipeModal");
+    const shoppingModal = document.getElementById("shoppingModal");
+    const apiModal = document.getElementById("apiModal");
+    const btnQuickFill = document.getElementById("btnQuickFill");
+    const toast = document.getElementById("toast");
+    const toastMessage = document.getElementById("toastMessage");
+    const toastIcon = document.getElementById("toastIcon");
+
+    function showToast(message, icon = "✨") {
+      toastMessage.textContent = message;
+      toastIcon.textContent = icon;
+      toast.classList.remove("translate-y-20", "opacity-0");
+      toast.classList.add("translate-y-0", "opacity-100");
+      setTimeout(() => {
+        toast.classList.remove("translate-y-0", "opacity-100");
+        toast.classList.add("translate-y-20", "opacity-0");
+      }, 2400);
+    }
+
+    function renderFridgeList() {
+      ingredientsListEl.innerHTML = "";
+      const count = state.fridge.length;
+      totalIngredientsCountEl.textContent = count;
+      const selectedCount = state.fridge.filter(i => i.selected).length;
+      selectedCountBadgeEl.textContent = `${selectedCount}개 선택`;
+
+      if (count === 0) {
+        emptyFridgeHintEl.classList.remove("hidden");
+      } else {
+        emptyFridgeHintEl.classList.add("hidden");
+      }
+
+      state.fridge.forEach((item, index) => {
+        const itemRow = document.createElement("div");
+        itemRow.className = `flex items-center justify-between px-3 py-2 rounded-xl border text-xs transition cursor-pointer ${
+          item.selected 
+            ? "bg-amber-50 border-amber-300 text-amber-950 font-medium shadow-sm" 
+            : "bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100"
+        }`;
+
+        itemRow.innerHTML = `
+          <div class="flex items-center space-x-2.5 flex-1">
+            <input type="checkbox" ${item.selected ? "checked" : ""} class="rounded text-amber-600 focus:ring-amber-500 h-3.5 w-3.5 pointer-events-none">
+            <span>${item.name}</span>
+          </div>
+          <button data-index="${index}" class="delete-btn text-stone-400 hover:text-rose-500 p-1 rounded-md transition" title="삭제">
+            <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        `;
+
+        itemRow.addEventListener("click", (e) => {
+          if (e.target.closest(".delete-btn")) {
+            const idx = parseInt(e.target.closest(".delete-btn").dataset.index, 10);
+            removeIngredient(idx);
+            return;
+          }
+          state.fridge[index].selected = !state.fridge[index].selected;
+          renderFridgeList();
+        });
+
+        ingredientsListEl.appendChild(itemRow);
+      });
+    }
+
+    function renderPresets() {
+      presetPillsContainer.innerHTML = "";
+      defaultPresets.forEach(presetName => {
+        const isAlreadyAdded = state.fridge.some(i => i.name === presetName);
+        const pill = document.createElement("button");
+        pill.className = `text-[11px] px-2.5 py-1 rounded-lg border transition ${
+          isAlreadyAdded 
+            ? "bg-stone-100 border-stone-200 text-stone-400 cursor-default" 
+            : "bg-white hover:bg-amber-50 border-stone-200 text-stone-700 hover:border-amber-300"
+        }`;
+        pill.textContent = `+ ${presetName}`;
+        if (!isAlreadyAdded) {
+          pill.addEventListener("click", () => {
+            addIngredient(presetName, true);
+          });
+        }
+        presetPillsContainer.appendChild(pill);
+      });
+    }
+
+    function addIngredient(name, autoSelect = true) {
+      const cleanName = name.trim();
+      if (!cleanName) return;
+      if (state.fridge.some(i => i.name === cleanName)) {
+        showToast(`'${cleanName}'은(는) 이미 냉장고에 있습니다.`, "⚠️");
+        return;
+      }
+      state.fridge.push({ name: cleanName, selected: autoSelect });
+      renderFridgeList();
+      renderPresets();
+      showToast(`'${cleanName}' 추가 완료!`, "🥦");
+    }
+
+    function removeIngredient(index) {
+      const removed = state.fridge.splice(index, 1);
+      renderFridgeList();
+      renderPresets();
+      if (removed.length > 0) {
+        showToast(`'${removed[0].name}' 삭제되었습니다.`, "🗑️");
+      }
+    }
+
+    function createDynamicRecipeForIngredients(selectedIngredients, index) {
+      const main1 = selectedIngredients[0] || "달걀";
+      const main2 = selectedIngredients[1] || "양파";
+      const main3 = selectedIngredients[2] || "대파";
+
+      // Cooking genres to cycle through
+      const archetypes = [
+        {
+          name: `${main1} ${main2} 매콤 볶음`,
+          category: "볶음 & 구이",
+          dishType: "stirfry",
+          summary: `${main1}과(와) ${main2}을(를) 센 불에 달달 볶아 특제 양념으로 불맛을 입힌 요리`,
+          ingredientsText: `${main1} 150g, ${main2} 100g, 진간장 1.5T, 고춧가루 1T, 다진마늘 0.5T, 참기름 1T`,
+          steps: [
+            `달군 팬에 기름을 두르고 ${main1}을(를) 먼저 노릇하게 볶습니다.`,
+            `손질한 ${main2}과(와) 다진 마늘을 넣고 센 불에서 수분을 날리며 빠르게 볶아줍니다.`,
+            `간장, 고춧가루 양념을 둘러 간을 맞춘 뒤 참기름을 둘러 불을 끕니다.`
+          ],
+          cookingTip: "센 불에서 빠르게 볶아야 채소의 아삭한 식감과 고기의 육즙이 유지됩니다."
+        },
+        {
+          name: `얼큰 ${main1} ${main2} 찌개`,
+          category: "찌개 & 국",
+          dishType: "stew",
+          summary: `${main1}에서 우러난 진한 국물과 ${main2}의 단맛이 어우러진 든든한 찌개`,
+          ingredientsText: `${main1} 100g, ${main2} 80g, 된장 또는 고추장 1.5T, 고춧가루 1T, 물 450ml`,
+          steps: [
+            `냄비에 ${main1}을(를) 넣고 살짝 볶아 고소한 풍미를 냅니다.`,
+            `물 450ml를 붓고 장류 양념을 풀어 한소끔 끓입니다.`,
+            `끓어오르면 썰어둔 ${main2}을(를) 넣고 중약불에서 7~10분간 푹 끓여냅니다.`
+          ],
+          cookingTip: "마지막에 송송 썬 대파나 청양고추를 넣으면 국물이 훨씬 깔끔하고 얼큰해집니다."
+        },
+        {
+          name: `단짠 ${main1} 덮밥`,
+          category: "덮밥 & 면",
+          dishType: "oneplate",
+          summary: `굴소스와 간장 소스에 ${main1}을(를) 볶아 따끈한 밥 위에 푸짐하게 올린 한그릇 요리`,
+          ingredientsText: `${main1} 120g, ${main2} 50g, 밥 1공기, 진간장 1.5T, 굴소스 1T, 올리고당 0.5T`,
+          steps: [
+            `팬에 오일을 두르고 ${main1}과(와) ${main2}을(를) 중불에 볶습니다.`,
+            `간장, 굴소스, 올리고당, 물 2스푼을 넣고 양념이 졸아들 때까지 1~2분 조립니다.`,
+            `따뜻한 밥 위에 볶은 재료를 소스와 함께 골고루 얹어냅니다.`
+          ],
+          cookingTip: "계란후라이 반숙을 하나 얹어 노른자를 터뜨려 비벼 먹으면 더욱 부드럽습니다."
+        },
+        {
+          name: `구수한 ${main1} 솥밥/영양밥`,
+          category: "무쇠솥밥 & 밥",
+          dishType: "potrice",
+          summary: `${main1}의 영양과 향이 고슬고슬한 밥알에 배어든 별미 밥`,
+          ingredientsText: `쌀 2컵, ${main1} 100g, 들기름 1T, 양조간장 1T, 밥물 1:0.9`,
+          steps: [
+            `불린 쌀 위에 손질한 ${main1}을(를) 가볍게 볶아 올립니다.`,
+            `물 비율을 맞추고 뚜껑을 닫아 끓어오르면 약불로 12분 익힙니다.`,
+            `불을 끄고 10분간 뜸을 들인 뒤 들기름과 양념간장에 비벼 완성합니다.`
+          ],
+          cookingTip: "뜸 들이는 10분 동안 뚜껑을 절대 열지 않아야 밥알이 찰지게 익습니다."
+        }
+      ];
+
+      const arch = archetypes[index % archetypes.length];
+      return {
+        id: `custom-dish-${Date.now()}-${index}`,
+        name: arch.name,
+        category: arch.category,
+        dishType: arch.dishType,
+        primaryIngredients: [main1, main2, main3].filter(Boolean),
+        supportingIngredients: ["진간장", "대파", "다진 마늘", "참기름"],
+        summary: arch.summary,
+        ingredientsText: arch.ingredientsText,
+        steps: arch.steps,
+        cookingTip: arch.cookingTip
+      };
+    }
+
+    async function generateSmartWeeklyPlan() {
+      const selectedItems = state.fridge.filter(i => i.selected).map(i => i.name);
+      const days = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"];
+      const mealType = document.getElementById("mealTypeSelect").value;
+      const generateBtnText = document.getElementById("generateBtnText");
+
+      // Fallback if no ingredients selected
+      const activeIngredients = selectedItems.length > 0 
+        ? selectedItems 
+        : state.fridge.map(i => i.name);
+
+      generateBtnText.textContent = "식단표 구성 중...";
+      btnGeneratePlan.disabled = true;
+
+      try {
+        // If Gemini API Key is provided, call Gemini to generate a truly custom plan
+        if (state.apiKey && state.apiKey.length > 10) {
+          showToast("AI가 입력하신 재료로 식단을 생성 중입니다...", "🤖");
+          const aiPlan = await fetchGeminiWeeklyPlan(activeIngredients, mealType);
+          if (aiPlan && aiPlan.length === 7) {
+            state.currentWeeklyPlan = aiPlan;
+            renderWeeklyPlanCards(aiPlan);
+            document.getElementById("planStatusTag").textContent = "Gemini AI 맞춤 모드";
+            showToast("AI 맞춤 7일 식단표가 완성되었습니다!", "✨");
+            return;
+          }
+        }
+
+        // Internal Smart Matching Engine (Handles ALL cooking types)
+        const scoredRecipes = RECIPE_DATABASE.map(recipe => {
+          let score = 0;
+          recipe.primaryIngredients.forEach(ing => {
+            if (activeIngredients.some(sel => ing.includes(sel) || sel.includes(ing))) {
+              score += 4;
+            }
+          });
+
+          // Style adjustments based on user's preference
+          if (mealType === "allRounder") {
+            // Keep variety balanced
+          } else if (mealType === "onePlate" && (recipe.dishType === "oneplate" || recipe.dishType === "noodle")) {
+            score += 3;
+          } else if (mealType === "koreanHome" && (recipe.dishType === "stew" || recipe.dishType === "braise")) {
+            score += 3;
+          } else if (mealType === "potRiceFocus" && recipe.dishType === "potrice") {
+            score += 4;
+          }
+
+          return { recipe, score };
+        });
+
+        // Sort by match score
+        scoredRecipes.sort((a, b) => b.score - a.score + (Math.random() - 0.5));
+
+        const selectedRecipes = [];
+        const usedIds = new Set();
+
+        // 1. Pick matched predefined recipes
+        for (const item of scoredRecipes) {
+          if (item.score > 0 && !usedIds.has(item.recipe.id)) {
+            selectedRecipes.push(item.recipe);
+            usedIds.add(item.recipe.id);
+            if (selectedRecipes.length >= 7) break;
+          }
+        }
+
+        // 2. If user has unique ingredients or needs more recipes, dynamically craft dishes!
+        let dynamicIdx = 0;
+        while (selectedRecipes.length < 7) {
+          // Shuffle ingredients to produce diverse dishes
+          const rotatedIngredients = [...activeIngredients].sort(() => Math.random() - 0.5);
+          const dynamicDish = createDynamicRecipeForIngredients(rotatedIngredients, dynamicIdx);
+          selectedRecipes.push(dynamicDish);
+          dynamicIdx++;
+        }
+
+        // Shuffle slightly for daily menu excitement (avoiding same dishType 2 days in a row)
+        const plan = [];
+        days.forEach((dayName, idx) => {
+          const dinnerRecipe = selectedRecipes[idx];
+
+          let breakfast = "플레인 요거트 + 바나나 슬라이스 + 그래놀라";
+          if (idx % 2 === 1) {
+            breakfast = "삶은 달걀 2개 + 제철 과일 + 따뜻한 보리차";
+          }
+
+          let lunch = null;
+          if (mealType === "allRounder" || mealType === "koreanHome") {
+            const quickLunches = [
+              "남은 반찬 계란 볶음밥",
+              "초간단 묵은지 비빔국수",
+              "두부 양파 조림 덮밥",
+              "참치 마요 덮밥",
+              "들기름 계란 밥 & 김치",
+              "야채 듬뿍 카레라이스",
+              "소면 잔치국수"
+            ];
+            lunch = quickLunches[idx % quickLunches.length];
+          }
+
+          plan.push({
+            day: dayName,
+            dayIndex: idx + 1,
+            breakfast: breakfast,
+            lunch: lunch,
+            dinner: dinnerRecipe,
+            tip: dinnerRecipe.cookingTip || "양념을 미리 섞어두면 15분 컷 완성!"
+          });
+        });
+
+        state.currentWeeklyPlan = plan;
+        renderWeeklyPlanCards(plan);
+        document.getElementById("planStatusTag").textContent = "만능 요리 매칭 모드";
+        showToast("선택한 식재료로 7일 식단표가 완성되었습니다!", "✨");
+
+      } catch (err) {
+        console.error(err);
+        showToast("식단 생성 중 문제가 발생하여 기본 식단으로 구성했습니다.", "⚠️");
+      } finally {
+        generateBtnText.textContent = "선택한 재료로 일주일 식단표 만들기";
+        btnGeneratePlan.disabled = false;
+      }
+    }
+
+    async function fetchGeminiWeeklyPlan(ingredients, mealType) {
+      const apiKey = state.apiKey || "";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+      const systemPrompt = `당신은 한식, 양식, 일품요리를 통달한 최고 수준의 식단 플래너 요리사입니다. 사용자가 보유하고 선택한 식재료를 최대한 활용하여 버리는 식재료 없이 월요일부터 일요일까지 7일간의 다양하고 실용적인 저녁 식단(볶음, 찌개, 덮밥, 조림, 파스타, 솥밥 등)을 JSON 형태로 생성해야 합니다.`;
+
+      const userPrompt = `
+선택된 냉장고 식재료: [${ingredients.join(", ")}]
+식단 스타일: ${mealType}
+
+위 재료를 적극 활용하여 7일(월~일) 저녁 식단을 작성해 주세요. 
+특정 요리(솥밥 등)에만 치우치지 말고 볶음, 찌개/국, 덮밥, 면 요리, 조림 등 다채로운 메뉴를 배정하세요.
+반드시 아래 JSON 스키마를 만족하는 유효한 JSON 배열만 응답하세요:
+[
+  {
+    "day": "월요일",
+    "dayIndex": 1,
+    "breakfast": "플레인 요거트 + 바나나 + 오트밀",
+    "lunch": "간단 볶음밥",
+    "dinner": {
+      "id": "gemini-dish-1",
+      "name": "요리 이름",
+      "category": "볶음 & 구이",
+      "dishType": "stirfry",
+      "primaryIngredients": ["주재료1", "주재료2"],
+      "supportingIngredients": ["양념1", "양념2"],
+      "summary": "요리 소개 한 줄",
+      "ingredientsText": "재료 분량 및 양념 상세",
+      "steps": ["1단계 조리법", "2단계 조리법", "3단계 조리법"],
+      "cookingTip": "맛있게 만드는 꿀팁"
+    },
+    "tip": "조리 팁 요약"
+  }
+]
+`;
+
+      const payload = {
+        contents: [{ parts: [{ text: userPrompt }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: {
+          responseMimeType: "application/json"
+        }
+      };
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      const contentText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (contentText) {
+        return JSON.parse(contentText);
+      }
+      return null;
+    }
+
+    function renderWeeklyPlanCards(plan) {
+      weeklyPlanContainer.innerHTML = "";
+
+      // Badge style mapping for dish types
+      const categoryBadges = {
+        "볶음 & 구이": "bg-rose-50 text-rose-700 border-rose-200",
+        "찌개 & 국": "bg-amber-50 text-amber-800 border-amber-200",
+        "덮밥 & 면": "bg-sky-50 text-sky-800 border-sky-200",
+        "조림 & 찜": "bg-purple-50 text-purple-800 border-purple-200",
+        "무쇠솥밥 & 밥": "bg-emerald-50 text-emerald-800 border-emerald-200"
+      };
+
+      plan.forEach((dayData) => {
+        const card = document.createElement("div");
+        card.className = "bg-white rounded-2xl p-4 border border-stone-200 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between";
+        
+        const badgeClass = categoryBadges[dayData.dinner.category] || "bg-stone-100 text-stone-700 border-stone-200";
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-2.5 pb-2 border-b border-stone-100">
+              <span class="font-bold text-stone-900 text-sm flex items-center gap-1.5">
+                <span class="w-6 h-6 rounded-lg bg-stone-100 flex items-center justify-center text-xs font-black text-stone-700">${dayData.dayIndex}</span>
+                ${dayData.day}
+              </span>
+              <span class="text-[11px] px-2.5 py-0.5 rounded-full font-semibold border ${badgeClass}">
+                ${dayData.dinner.category || "일품 요리"}
+              </span>
+            </div>
+
+            <!-- Breakfast & Lunch info -->
+            <div class="space-y-1 mb-3 text-xs text-stone-500">
+              <div class="flex items-start gap-1.5">
+                <span class="font-medium text-stone-400">아침:</span>
+                <span class="text-stone-700 truncate">${dayData.breakfast}</span>
+              </div>
+              ${dayData.lunch ? `
+              <div class="flex items-start gap-1.5">
+                <span class="font-medium text-stone-400">점심:</span>
+                <span class="text-stone-700 truncate">${dayData.lunch}</span>
+              </div>` : ''}
+            </div>
+
+            <!-- Dinner Main Focus -->
+            <div class="bg-stone-50 rounded-xl p-3 border border-stone-100 mb-2">
+              <p class="text-[10px] uppercase font-bold text-amber-700 tracking-wider mb-0.5">저녁 메인 메뉴</p>
+              <h4 class="font-bold text-stone-900 text-sm mb-1">${dayData.dinner.name}</h4>
+              <p class="text-xs text-stone-600 line-clamp-2 leading-relaxed mb-2">${dayData.dinner.summary}</p>
+              
+              <div class="flex flex-wrap gap-1">
+                ${dayData.dinner.primaryIngredients.map(ing => `
+                  <span class="text-[10px] bg-white border border-stone-200 px-1.5 py-0.5 rounded text-stone-600 font-medium">${ing}</span>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-2 mt-1 border-t border-stone-100 flex items-center justify-between">
+            <span class="text-[11px] text-stone-400 truncate max-w-[170px]">${dayData.tip}</span>
+            <button data-recipe-id="${dayData.dinner.id}" class="btn-view-recipe text-xs font-semibold text-amber-700 hover:text-amber-800 hover:underline flex items-center gap-0.5">
+              조리법 보기 →
+            </button>
+          </div>
+        `;
+
+        card.querySelector(".btn-view-recipe").addEventListener("click", () => {
+          openRecipeModal(dayData.dinner);
+        });
+
+        weeklyPlanContainer.appendChild(card);
+      });
+    }
+
+    function openRecipeModal(recipe) {
+      document.getElementById("modalCategoryTag").textContent = recipe.category;
+      document.getElementById("modalRecipeTitle").textContent = recipe.name;
+      document.getElementById("modalIngredientsList").innerHTML = `
+        <p class="mb-1 font-semibold text-stone-800">활용 식재료: <span class="font-normal text-stone-600">${recipe.primaryIngredients.join(", ")}</span></p>
+        <p class="font-semibold text-stone-800">양념 및 재료 분량: <span class="font-normal text-stone-600">${recipe.ingredientsText}</span></p>
+      `;
+
+      const stepsListEl = document.getElementById("modalStepsList");
+      stepsListEl.innerHTML = "";
+      recipe.steps.forEach(step => {
+        const li = document.createElement("li");
+        li.textContent = step;
+        stepsListEl.appendChild(li);
+      });
+
+      const tipBox = document.getElementById("modalPotRiceTipBox");
+      const tipText = recipe.cookingTip || recipe.potRiceTip;
+      if (tipText) {
+        document.getElementById("modalPotRiceTipText").textContent = tipText;
+        tipBox.classList.remove("hidden");
+      } else {
+        tipBox.classList.add("hidden");
+      }
+
+      recipeModal.classList.remove("hidden");
+    }
+
+    function openShoppingModal() {
+      const container = document.getElementById("shoppingItemsContainer");
+      container.innerHTML = "";
+
+      const fridgeNames = new Set(state.fridge.map(i => i.name));
+      const missingIngredients = new Map();
+
+      state.currentWeeklyPlan.forEach(day => {
+        day.dinner.primaryIngredients.forEach(ing => {
+          if (!fridgeNames.has(ing)) {
+            missingIngredients.set(ing, (missingIngredients.get(ing) || 0) + 1);
+          }
+        });
+      });
+
+      if (missingIngredients.size === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 text-stone-500 text-xs">
+            <span class="text-2xl block mb-1">🎉</span>
+            대단해요! 현재 냉장고에 있는 재료만으로 이번 주 모든 요리를 완벽하게 만들 수 있습니다.
+          </div>
+        `;
+      } else {
+        missingIngredients.forEach((count, name) => {
+          const row = document.createElement("div");
+          row.className = "flex items-center justify-between p-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs";
+          row.innerHTML = `
+            <span class="font-medium text-stone-800">🛒 ${name}</span>
+            <span class="text-stone-400">${count}회 레시피 필요</span>
+          `;
+          container.appendChild(row);
+        });
+      }
+
+      shoppingModal.classList.remove("hidden");
+    }
+
+    function copyWeeklyPlanToClipboard() {
+      if (!state.currentWeeklyPlan || state.currentWeeklyPlan.length === 0) {
+        showToast("복사할 식단표가 없습니다.", "⚠️");
+        return;
+      }
+
+      let textOutput = `[📋 우리 집 냉장고 파먹기 7일 맞춤 식단표]\n\n`;
+      state.currentWeeklyPlan.forEach(day => {
+        textOutput += `${day.day} [${day.dinner.category}] ${day.dinner.name}\n`;
+        textOutput += ` - 아침: ${day.breakfast}\n`;
+        if (day.lunch) textOutput += ` - 점심: ${day.lunch}\n`;
+        textOutput += ` - 저녁 메인: ${day.dinner.name} (재료: ${day.dinner.primaryIngredients.join(", ")})\n\n`;
+      });
+
+      const tempTextarea = document.createElement("textarea");
+      tempTextarea.value = textOutput;
+      document.body.appendChild(tempTextarea);
+      tempTextarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(tempTextarea);
+
+      showToast("식단표가 클립보드에 복사되었습니다!", "📋");
+    }
+
+    btnAddIngredient.addEventListener("click", () => {
+      addIngredient(ingredientInputEl.value);
+      ingredientInputEl.value = "";
+      ingredientInputEl.focus();
+    });
+
+    ingredientInputEl.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        addIngredient(ingredientInputEl.value);
+        ingredientInputEl.value = "";
+      }
+    });
+
+    btnSelectAll.addEventListener("click", () => {
+      state.fridge.forEach(i => i.selected = true);
+      renderFridgeList();
+    });
+
+    btnClearAll.addEventListener("click", () => {
+      state.fridge = [];
+      renderFridgeList();
+      renderPresets();
+      showToast("냉장고를 비웠습니다.", "🧹");
+    });
+
+    btnQuickFill.addEventListener("click", () => {
+      state.fridge = [
+        { name: "삼겹살", selected: true },
+        { name: "간 돼지고기", selected: true },
+        { name: "느타리버섯", selected: true },
+        { name: "콩나물", selected: true },
+        { name: "두부", selected: true },
+        { name: "달걀", selected: true },
+        { name: "묵은지", selected: false },
+        { name: "양파", selected: false },
+        { name: "대파", selected: false },
+        { name: "쌀", selected: true }
+      ];
+      renderFridgeList();
+      renderPresets();
+      generateSmartWeeklyPlan();
+      showToast("다양한 요리가 가능한 식재료를 채웠습니다!", "✨");
+    });
+
+    btnGeneratePlan.addEventListener("click", () => {
+      generateSmartWeeklyPlan();
+    });
+
+    document.getElementById("btnCopyPlan").addEventListener("click", copyWeeklyPlanToClipboard);
+    document.getElementById("btnShoppingList").addEventListener("click", openShoppingModal);
+
+    // Modal close controls
+    document.getElementById("btnCloseRecipeModal").addEventListener("click", () => recipeModal.classList.add("hidden"));
+    document.getElementById("btnCloseRecipeModalBottom").addEventListener("click", () => recipeModal.classList.add("hidden"));
+    document.getElementById("btnCloseShoppingModal").addEventListener("click", () => shoppingModal.classList.add("hidden"));
+    document.getElementById("btnCloseShoppingModalBtn").addEventListener("click", () => shoppingModal.classList.add("hidden"));
+    
+    // API modal controls
+    document.getElementById("btnOpenApiModal").addEventListener("click", () => apiModal.classList.remove("hidden"));
+    document.getElementById("btnCloseApiModal").addEventListener("click", () => apiModal.classList.add("hidden"));
+    document.getElementById("btnSaveApiConfig").addEventListener("click", () => {
+      state.apiKey = document.getElementById("customApiKeyInput").value.trim();
+      apiModal.classList.add("hidden");
+      showToast("설정이 저장되었습니다.", "⚙️");
+    });
+
+    document.getElementById("btnCopyShoppingList").addEventListener("click", () => {
+      const fridgeNames = new Set(state.fridge.map(i => i.name));
+      const missing = [];
+      state.currentWeeklyPlan.forEach(d => {
+        d.dinner.primaryIngredients.forEach(ing => {
+          if (!fridgeNames.has(ing) && !missing.includes(ing)) missing.push(ing);
+        });
+      });
+      const text = missing.length > 0 ? `[장보기 목록]\n` + missing.map(m => `- ${m}`).join("\n") : "부족한 재료가 없습니다.";
+      const tempArea = document.createElement("textarea");
+      tempArea.value = text;
+      document.body.appendChild(tempArea);
+      tempArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(tempArea);
+      showToast("장보기 목록이 복사되었습니다!", "🛒");
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      renderPresets();
+      renderFridgeList();
+      generateSmartWeeklyPlan();
+    });
+  </script>
+</body>
+</html>
